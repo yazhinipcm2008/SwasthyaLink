@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Account and session operations
+  - name: profile
+    description: Current patient profile
+  - name: records
+    description: Medical record operations
 paths:
   /healthz:
     get:
@@ -24,6 +30,136 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Create a patient account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created patient session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Invalid registration data
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Sign in to a patient account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Signed-in patient session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          description: Invalid credentials
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Sign out current patient
+      responses:
+        "204":
+          description: Signed out
+  /auth/me:
+    get:
+      operationId: getSession
+      tags: [auth]
+      summary: Return the current patient session
+      responses:
+        "200":
+          description: Current patient session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          description: Not signed in
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the current patient profile
+      responses:
+        "200":
+          description: Patient profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Not signed in
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update the current patient profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated patient profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Not signed in
+  /records:
+    get:
+      operationId: getRecords
+      tags: [records]
+      summary: List the current patient's medical records
+      responses:
+        "200":
+          description: Medical records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MedicalRecord"
+        "401":
+          description: Not signed in
+    post:
+      operationId: createRecord
+      tags: [records]
+      summary: Add a medical record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordInput"
+      responses:
+        "201":
+          description: Created medical record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalRecord"
+        "401":
+          description: Not signed in
 components:
   schemas:
     HealthStatus:
@@ -33,4 +169,109 @@ components:
           type: string
       required:
         - status
+    RegisterInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        language:
+          type: string
+          enum: [en, ml]
+      required: [name, email, password]
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+      required: [email, password]
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/Profile"
+      required: [user]
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        healthId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        age:
+          type: ["integer", "null"]
+        bloodGroup:
+          type: ["string", "null"]
+        allergies:
+          type: ["string", "null"]
+        emergencyContact:
+          type: ["string", "null"]
+        language:
+          type: string
+          enum: [en, ml]
+      required: [id, healthId, name, email, age, bloodGroup, allergies, emergencyContact, language]
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        age:
+          type: ["integer", "null"]
+          minimum: 0
+        bloodGroup:
+          type: ["string", "null"]
+        allergies:
+          type: ["string", "null"]
+        emergencyContact:
+          type: ["string", "null"]
+        language:
+          type: string
+          enum: [en, ml]
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum: [diagnosis, prescription, visit]
+        title:
+          type: string
+        details:
+          type: string
+        recordedAt:
+          type: string
+          format: date-time
+      required: [id, kind, title, details, recordedAt]
+    RecordInput:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [diagnosis, prescription, visit]
+        title:
+          type: string
+          minLength: 1
+        details:
+          type: string
+          minLength: 1
+        recordedAt:
+          type: string
+          format: date-time
+      required: [kind, title, details]
 

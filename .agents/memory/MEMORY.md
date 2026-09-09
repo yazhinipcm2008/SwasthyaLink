@@ -1,0 +1,1 @@
+- [Workspace package installs](workspace-package-installs.md) — when a package belongs to one artifact, use the artifact filter because root-scoped installs are rejected.

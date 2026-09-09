@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SwasthyaLink"
+description = "A mobile-first digital health record app for migrant workers in Kerala, with bilingual patient profiles, medical records, QR health cards, and emergency access."
+version = "1.0.0"
+id = "artifacts/swasthyalink"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23928
+
+[services.development]
+run = "pnpm --filter @workspace/swasthyalink run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/swasthyalink", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/swasthyalink/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23928"
+BASE_PATH = "/"

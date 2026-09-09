@@ -1,6 +1,6 @@
-# [Project name]
+# SwasthyaLink
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+SwasthyaLink is a bilingual, mobile-first personal health record for migrant workers in Kerala.
 
 ## Run & Operate
 
@@ -22,23 +22,33 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/swasthyalink` — React/Vite patient app and visual theme
+- `artifacts/api-server` — Express API with session auth, profile, and medical record routes
+- `lib/api-spec/openapi.yaml` — source of truth for generated API hooks and validation
+- `lib/db/src/schema` — Drizzle/PostgreSQL schema for users, sessions, and medical records
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Patient authentication uses opaque, database-backed httpOnly sessions; passwords are hashed with Node's built-in scrypt.
+- The QR health card encodes a compact JSON payload of the user's key emergency details and health ID.
+- The frontend uses generated OpenAPI hooks so profile and record mutations invalidate or update the visible cache.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Register or sign in to receive a health ID
+- Maintain name, age, blood group, allergies, emergency contact, and language preference
+- Add diagnosis, prescription, and visit records
+- View a scannable health card and a high-contrast emergency screen
+- Switch the app between English and Malayalam
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the initial version simple and focused on the patient experience; do not add dashboards, AI, or offline sync unless requested.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run API codegen after editing `lib/api-spec/openapi.yaml`.
+- Run `pnpm --filter @workspace/db run push` after changing the Drizzle schema.
 
 ## Pointers
 
