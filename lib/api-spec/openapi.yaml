@@ -16,6 +16,8 @@ tags:
     description: Current patient profile
   - name: records
     description: Medical record operations
+  - name: doctor
+    description: Doctor worker search and care operations
 paths:
   /healthz:
     get:
@@ -160,6 +162,112 @@ paths:
                 $ref: "#/components/schemas/MedicalRecord"
         "401":
           description: Not signed in
+  /doctor/workers:
+    get:
+      operationId: searchWorkers
+      tags: [doctor]
+      summary: Search worker profiles by name or Health ID
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Matching workers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkerSearchResult"
+        "401":
+          description: Not signed in
+        "403":
+          description: Doctor access required
+  /doctor/workers/{healthId}:
+    get:
+      operationId: getWorkerProfile
+      tags: [doctor]
+      summary: Get a worker profile
+      parameters:
+        - name: healthId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Worker profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "401":
+          description: Not signed in
+        "403":
+          description: Doctor access required
+        "404":
+          description: Worker not found
+  /doctor/workers/{healthId}/records:
+    get:
+      operationId: getWorkerRecords
+      tags: [doctor]
+      summary: List a worker's medical records
+      parameters:
+        - name: healthId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Worker medical records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MedicalRecord"
+        "401":
+          description: Not signed in
+        "403":
+          description: Doctor access required
+        "404":
+          description: Worker not found
+    post:
+      operationId: createWorkerRecord
+      tags: [doctor]
+      summary: Add a medical record to a worker's history
+      parameters:
+        - name: healthId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordInput"
+      responses:
+        "201":
+          description: Created worker medical record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalRecord"
+        "400":
+          description: Invalid record data
+        "401":
+          description: Not signed in
+        "403":
+          description: Doctor access required
+        "404":
+          description: Worker not found
 components:
   schemas:
     HealthStatus:
@@ -181,6 +289,8 @@ components:
         password:
           type: string
           minLength: 6
+        role:
+          $ref: "#/components/schemas/UserRole"
         language:
           type: string
           enum: [en, ml]
@@ -194,6 +304,8 @@ components:
         password:
           type: string
           minLength: 1
+        role:
+          $ref: "#/components/schemas/UserRole"
       required: [email, password]
     Session:
       type: object
@@ -212,6 +324,8 @@ components:
           type: string
         email:
           type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
         age:
           type: ["integer", "null"]
         bloodGroup:
@@ -223,7 +337,7 @@ components:
         language:
           type: string
           enum: [en, ml]
-      required: [id, healthId, name, email, age, bloodGroup, allergies, emergencyContact, language]
+      required: [id, healthId, name, email, role, age, bloodGroup, allergies, emergencyContact, language]
     ProfileUpdate:
       type: object
       properties:
@@ -258,6 +372,23 @@ components:
           type: string
           format: date-time
       required: [id, kind, title, details, recordedAt]
+    UserRole:
+      type: string
+      enum: [worker, doctor]
+    WorkerSearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        healthId:
+          type: string
+        name:
+          type: string
+        age:
+          type: ["integer", "null"]
+        bloodGroup:
+          type: ["string", "null"]
+      required: [id, healthId, name, age, bloodGroup]
     RecordInput:
       type: object
       properties:

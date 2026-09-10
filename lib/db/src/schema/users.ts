@@ -1,6 +1,8 @@
 import { createInsertSchema } from "drizzle-zod";
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
+
+export const userRoleEnum = pgEnum("user_role", ["worker", "doctor"]);
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -8,6 +10,7 @@ export const usersTable = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  role: userRoleEnum("role").notNull().default("worker"),
   age: integer("age"),
   bloodGroup: text("blood_group"),
   allergies: text("allergies"),

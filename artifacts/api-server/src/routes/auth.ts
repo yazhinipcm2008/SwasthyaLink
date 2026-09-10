@@ -34,6 +34,7 @@ router.post("/auth/register", async (req, res) => {
       name: data.name.trim(),
       email,
       passwordHash: hashPassword(data.password),
+      role: data.role ?? "worker",
       language: data.language ?? "en",
     })
     .returning();
@@ -49,7 +50,7 @@ router.post("/auth/login", async (req, res) => {
   }
   const email = parsed.data.email.trim().toLowerCase();
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-  if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
+  if (!user || !verifyPassword(parsed.data.password, user.passwordHash) || (parsed.data.role && user.role !== parsed.data.role)) {
     res.status(401).json({ error: "Email or password is incorrect." });
     return;
   }

@@ -29,6 +29,7 @@ export const RegisterBody = zod.object({
   "name": zod.string().min(1),
   "email": zod.string().email(),
   "password": zod.string().min(registerBodyPasswordMin),
+  "role": zod.enum(['worker', 'doctor']).optional(),
   "language": zod.enum(['en', 'ml']).optional()
 })
 
@@ -38,6 +39,7 @@ export const RegisterResponse = zod.object({
   "healthId": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
@@ -55,7 +57,8 @@ export const RegisterResponse = zod.object({
 
 export const LoginBody = zod.object({
   "email": zod.string().email(),
-  "password": zod.string().min(1)
+  "password": zod.string().min(1),
+  "role": zod.enum(['worker', 'doctor']).optional()
 })
 
 export const LoginResponse = zod.object({
@@ -64,6 +67,7 @@ export const LoginResponse = zod.object({
   "healthId": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
@@ -88,6 +92,7 @@ export const GetSessionResponse = zod.object({
   "healthId": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
@@ -105,6 +110,7 @@ export const GetProfileResponse = zod.object({
   "healthId": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
@@ -135,6 +141,7 @@ export const UpdateProfileResponse = zod.object({
   "healthId": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
@@ -171,6 +178,91 @@ export const CreateRecordBody = zod.object({
 })
 
 export const CreateRecordResponse = zod.object({
+  "id": zod.number().int(),
+  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "title": zod.string(),
+  "details": zod.string(),
+  "recordedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Search worker profiles by name or Health ID
+ */
+
+
+
+export const SearchWorkersQueryParams = zod.object({
+  "q": zod.coerce.string().min(1)
+})
+
+export const SearchWorkersResponseItem = zod.object({
+  "id": zod.number().int(),
+  "healthId": zod.string(),
+  "name": zod.string(),
+  "age": zod.number().int().nullable(),
+  "bloodGroup": zod.string().nullable()
+})
+export const SearchWorkersResponse = zod.array(SearchWorkersResponseItem)
+
+
+/**
+ * @summary Get a worker profile
+ */
+export const GetWorkerProfileParams = zod.object({
+  "healthId": zod.coerce.string()
+})
+
+export const GetWorkerProfileResponse = zod.object({
+  "id": zod.number().int(),
+  "healthId": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['worker', 'doctor']),
+  "age": zod.number().int().nullable(),
+  "bloodGroup": zod.string().nullable(),
+  "allergies": zod.string().nullable(),
+  "emergencyContact": zod.string().nullable(),
+  "language": zod.enum(['en', 'ml'])
+})
+
+
+/**
+ * @summary List a worker's medical records
+ */
+export const GetWorkerRecordsParams = zod.object({
+  "healthId": zod.coerce.string()
+})
+
+export const GetWorkerRecordsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "title": zod.string(),
+  "details": zod.string(),
+  "recordedAt": zod.coerce.date()
+})
+export const GetWorkerRecordsResponse = zod.array(GetWorkerRecordsResponseItem)
+
+
+/**
+ * @summary Add a medical record to a worker's history
+ */
+export const CreateWorkerRecordParams = zod.object({
+  "healthId": zod.coerce.string()
+})
+
+
+
+
+
+export const CreateWorkerRecordBody = zod.object({
+  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "title": zod.string().min(1),
+  "details": zod.string().min(1),
+  "recordedAt": zod.coerce.date().optional()
+})
+
+export const CreateWorkerRecordResponse = zod.object({
   "id": zod.number().int(),
   "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
   "title": zod.string(),

@@ -17,12 +17,21 @@ export const RegisterInputLanguage = {
   ml: 'ml',
 } as const;
 
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+
+export const UserRole = {
+  worker: 'worker',
+  doctor: 'doctor',
+} as const;
+
 export interface RegisterInput {
   /** @minLength 1 */
   name: string;
   email: string;
   /** @minLength 6 */
   password: string;
+  role?: UserRole;
   language?: RegisterInputLanguage;
 }
 
@@ -30,6 +39,7 @@ export interface LoginInput {
   email: string;
   /** @minLength 1 */
   password: string;
+  role?: UserRole;
 }
 
 export type ProfileLanguage = typeof ProfileLanguage[keyof typeof ProfileLanguage];
@@ -45,6 +55,7 @@ export interface Profile {
   healthId: string;
   name: string;
   email: string;
+  role: UserRole;
   /** @nullable */
   age: number | null;
   /** @nullable */
@@ -102,6 +113,16 @@ export interface MedicalRecord {
   recordedAt: string;
 }
 
+export interface WorkerSearchResult {
+  id: number;
+  healthId: string;
+  name: string;
+  /** @nullable */
+  age: number | null;
+  /** @nullable */
+  bloodGroup: string | null;
+}
+
 export type RecordInputKind = typeof RecordInputKind[keyof typeof RecordInputKind];
 
 
@@ -119,4 +140,11 @@ export interface RecordInput {
   details: string;
   recordedAt?: string;
 }
+
+export type SearchWorkersParams = {
+/**
+ * @minLength 1
+ */
+q: string;
+};
 

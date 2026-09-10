@@ -18,4 +18,7 @@ export * from './recordInput';
 export * from './recordInputKind';
 export * from './registerInput';
 export * from './registerInputLanguage';
+export * from './searchWorkersParams';
 export * from './session';
+export * from './userRole';
+export * from './workerSearchResult';

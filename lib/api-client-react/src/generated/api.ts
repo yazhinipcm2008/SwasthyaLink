@@ -27,7 +27,9 @@ import type {
   ProfileUpdate,
   RecordInput,
   RegisterInput,
-  Session
+  SearchWorkersParams,
+  Session,
+  WorkerSearchResult
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -719,5 +721,315 @@ export const useCreateRecord = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateRecordMutationOptions(options));
+    }
+
+export const getSearchWorkersUrl = (params: SearchWorkersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/doctor/workers?${stringifiedParams}` : `/api/doctor/workers`
+}
+
+/**
+ * @summary Search worker profiles by name or Health ID
+ */
+export const searchWorkers = async (params: SearchWorkersParams, options?: Parameters<typeof customFetch>[1]): Promise<WorkerSearchResult[]> => {
+
+  return customFetch<WorkerSearchResult[]>(getSearchWorkersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchWorkersQueryKey = (params?: SearchWorkersParams,) => {
+    return [
+    `/api/doctor/workers`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchWorkersQueryOptions = <TData = Awaited<ReturnType<typeof searchWorkers>>, TError = ErrorType<void>>(params: SearchWorkersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchWorkers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchWorkersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchWorkers>>> = ({ signal }) => searchWorkers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchWorkers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchWorkersQueryResult = NonNullable<Awaited<ReturnType<typeof searchWorkers>>>
+export type SearchWorkersQueryError = ErrorType<void>
+
+
+/**
+ * @summary Search worker profiles by name or Health ID
+ */
+
+export function useSearchWorkers<TData = Awaited<ReturnType<typeof searchWorkers>>, TError = ErrorType<void>>(
+ params: SearchWorkersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchWorkers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchWorkersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetWorkerProfileUrl = (healthId: string,) => {
+
+
+
+
+  return `/api/doctor/workers/${healthId}`
+}
+
+/**
+ * @summary Get a worker profile
+ */
+export const getWorkerProfile = async (healthId: string, options?: Parameters<typeof customFetch>[1]): Promise<Profile> => {
+
+  return customFetch<Profile>(getGetWorkerProfileUrl(healthId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWorkerProfileQueryKey = (healthId: string,) => {
+    return [
+    `/api/doctor/workers/${healthId}`
+    ] as const;
+    }
+
+
+export const getGetWorkerProfileQueryOptions = <TData = Awaited<ReturnType<typeof getWorkerProfile>>, TError = ErrorType<void>>(healthId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkerProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWorkerProfileQueryKey(healthId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWorkerProfile>>> = ({ signal }) => getWorkerProfile(healthId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: healthId !== null && healthId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWorkerProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWorkerProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getWorkerProfile>>>
+export type GetWorkerProfileQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a worker profile
+ */
+
+export function useGetWorkerProfile<TData = Awaited<ReturnType<typeof getWorkerProfile>>, TError = ErrorType<void>>(
+ healthId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkerProfile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWorkerProfileQueryOptions(healthId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetWorkerRecordsUrl = (healthId: string,) => {
+
+
+
+
+  return `/api/doctor/workers/${healthId}/records`
+}
+
+/**
+ * @summary List a worker's medical records
+ */
+export const getWorkerRecords = async (healthId: string, options?: Parameters<typeof customFetch>[1]): Promise<MedicalRecord[]> => {
+
+  return customFetch<MedicalRecord[]>(getGetWorkerRecordsUrl(healthId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWorkerRecordsQueryKey = (healthId: string,) => {
+    return [
+    `/api/doctor/workers/${healthId}/records`
+    ] as const;
+    }
+
+
+export const getGetWorkerRecordsQueryOptions = <TData = Awaited<ReturnType<typeof getWorkerRecords>>, TError = ErrorType<void>>(healthId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkerRecords>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWorkerRecordsQueryKey(healthId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWorkerRecords>>> = ({ signal }) => getWorkerRecords(healthId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: healthId !== null && healthId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWorkerRecords>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWorkerRecordsQueryResult = NonNullable<Awaited<ReturnType<typeof getWorkerRecords>>>
+export type GetWorkerRecordsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List a worker's medical records
+ */
+
+export function useGetWorkerRecords<TData = Awaited<ReturnType<typeof getWorkerRecords>>, TError = ErrorType<void>>(
+ healthId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWorkerRecords>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWorkerRecordsQueryOptions(healthId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateWorkerRecordUrl = (healthId: string,) => {
+
+
+
+
+  return `/api/doctor/workers/${healthId}/records`
+}
+
+/**
+ * @summary Add a medical record to a worker's history
+ */
+export const createWorkerRecord = async (healthId: string,
+    recordInput: RecordInput, options?: Parameters<typeof customFetch>[1]): Promise<MedicalRecord> => {
+
+  return customFetch<MedicalRecord>(getCreateWorkerRecordUrl(healthId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(recordInput)
+  }
+);}
+
+
+
+
+
+export const getCreateWorkerRecordMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWorkerRecord>>, TError,{healthId: string;data: BodyType<RecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createWorkerRecord>>, TError,{healthId: string;data: BodyType<RecordInput>}, TContext> => {
+
+const mutationKey = ['createWorkerRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createWorkerRecord>>, {healthId: string;data: BodyType<RecordInput>}> = (props) => {
+          const {healthId,data} = props ?? {};
+
+          return  createWorkerRecord(healthId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateWorkerRecordMutationResult = NonNullable<Awaited<ReturnType<typeof createWorkerRecord>>>
+    export type CreateWorkerRecordMutationBody = BodyType<RecordInput>
+    export type CreateWorkerRecordMutationError = ErrorType<void>
+
+    /**
+ * @summary Add a medical record to a worker's history
+ */
+export const useCreateWorkerRecord = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWorkerRecord>>, TError,{healthId: string;data: BodyType<RecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createWorkerRecord>>,
+        TError,
+        {healthId: string;data: BodyType<RecordInput>},
+        TContext
+      > => {
+      return useMutation(getCreateWorkerRecordMutationOptions(options));
     }
 

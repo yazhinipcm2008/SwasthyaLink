@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { RegisterInputLanguage } from './registerInputLanguage';
+import type { UserRole } from './userRole';
 
 export interface RegisterInput {
   /** @minLength 1 */
@@ -13,5 +14,6 @@ export interface RegisterInput {
   email: string;
   /** @minLength 6 */
   password: string;
+  role?: UserRole;
   language?: RegisterInputLanguage;
 }

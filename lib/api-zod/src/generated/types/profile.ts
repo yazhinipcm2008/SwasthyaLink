@@ -6,12 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ProfileLanguage } from './profileLanguage';
+import type { UserRole } from './userRole';
 
 export interface Profile {
   id: number;
   healthId: string;
   name: string;
   email: string;
+  role: UserRole;
   /** @nullable */
   age: number | null;
   /** @nullable */

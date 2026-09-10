@@ -26,6 +26,7 @@ export function toProfile(user: User) {
     healthId: user.healthId,
     name: user.name,
     email: user.email,
+    role: user.role,
     age: user.age,
     bloodGroup: user.bloodGroup,
     allergies: user.allergies,
@@ -73,6 +74,16 @@ export async function requireUser(req: Request, res: Response) {
   const user = await currentUser(req);
   if (!user) {
     res.status(401).json({ error: "Please sign in to continue." });
+    return null;
+  }
+  return user;
+}
+
+export async function requireDoctor(req: Request, res: Response) {
+  const user = await requireUser(req, res);
+  if (!user) return null;
+  if (user.role !== "doctor") {
+    res.status(403).json({ error: "Doctor access is required." });
     return null;
   }
   return user;

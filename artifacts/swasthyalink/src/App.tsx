@@ -46,6 +46,8 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import DoctorDashboardPage from '@/pages/doctor-dashboard';
+import DoctorLoginPage from '@/pages/doctor-login';
 import { Link, Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 
 const queryClient = new QueryClient();
@@ -465,9 +467,9 @@ function AuthPage() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (mode === 'login') {
-      login.mutate({ data: { email, password } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetSessionQueryKey() }); setLocation('/'); } });
+      login.mutate({ data: { email, password, role: 'worker' } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetSessionQueryKey() }); setLocation('/'); } });
     } else {
-      register.mutate({ data: { name, email, password, language } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetSessionQueryKey() }); setLocation('/'); } });
+      register.mutate({ data: { name, email, password, role: 'worker', language } }, { onSuccess: () => { client.invalidateQueries({ queryKey: getGetSessionQueryKey() }); setLocation('/'); } });
     }
   };
 
@@ -479,12 +481,24 @@ function AuthPage() {
 
 function Router() {
   const [location, setLocation] = useLocation();
-  const sessionQuery = useGetSession({ query: { enabled: location !== '/auth', queryKey: getGetSessionQueryKey(), retry: false } });
   const isAuth = location === '/auth';
-  useEffect(() => { if (!isAuth && sessionQuery.isError) setLocation('/auth'); }, [isAuth, sessionQuery.isError, setLocation]);
+  const isDoctorLogin = location === '/doctor-login';
+  const sessionQuery = useGetSession({ query: { enabled: !isAuth && !isDoctorLogin, queryKey: getGetSessionQueryKey(), retry: false } });
+  useEffect(() => { if (!isAuth && !isDoctorLogin && sessionQuery.isError) setLocation('/auth'); }, [isAuth, isDoctorLogin, sessionQuery.isError, setLocation]);
+  useEffect(() => {
+    const role = sessionQuery.data?.user.role;
+    if (role === 'doctor' && location !== '/doctor') setLocation('/doctor');
+    if (role === 'worker' && location === '/doctor') setLocation('/');
+  }, [location, sessionQuery.data?.user.role, setLocation]);
   if (isAuth) return <AuthPage />;
+  if (isDoctorLogin) return <DoctorLoginPage />;
   if (sessionQuery.isLoading || !sessionQuery.data) return <LoadingScreen />;
   const user = sessionQuery.data.user;
+  if (user.role === 'doctor') {
+    if (location !== '/doctor') return <LoadingScreen />;
+    return <DoctorDashboardPage user={user} />;
+  }
+  if (location === '/doctor') return <LoadingScreen />;
   return <AppShell user={user}><Switch><Route path="/"><HomePage user={user} language={user.language as Language} /></Route><Route path="/records"><RecordsPage language={user.language as Language} /></Route><Route path="/profile"><ProfilePage user={user} language={user.language as Language} onLanguageChange={() => undefined} /></Route><Route path="/health-card"><HealthCardPage user={user} /></Route><Route path="/emergency"><EmergencyPage user={user} /></Route><Route component={NotFound} /></Switch></AppShell>;
 }
 
