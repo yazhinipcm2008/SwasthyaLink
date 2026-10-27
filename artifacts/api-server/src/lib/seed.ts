@@ -1,10 +1,50 @@
 import { eq } from "drizzle-orm";
-import { db, usersTable, recordsTable } from "@workspace/db";
+import { db, client, usersTable, recordsTable } from "@workspace/db";
 import { hashPassword } from "./auth";
 import { logger } from "./logger";
 
 export async function seedInitialData() {
   try {
+    // Auto-create SQLite tables if running on a fresh deployment (e.g. Render)
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS "users" (
+        "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "health_id" text NOT NULL UNIQUE,
+        "name" text NOT NULL,
+        "aadhaar" text(12) NOT NULL UNIQUE,
+        "password_hash" text NOT NULL,
+        "role" text DEFAULT 'worker' NOT NULL,
+        "age" integer,
+        "blood_group" text,
+        "allergies" text,
+        "emergency_contact" text,
+        "language" text DEFAULT 'en' NOT NULL,
+        "created_at" integer NOT NULL,
+        "updated_at" integer NOT NULL
+      );
+    `);
+
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS "medical_records" (
+        "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "kind" text NOT NULL,
+        "title" text NOT NULL,
+        "provider_name" text,
+        "details" text,
+        "recorded_at" integer NOT NULL,
+        "created_at" integer NOT NULL
+      );
+    `);
+
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS "health_sessions" (
+        "token" text PRIMARY KEY NOT NULL,
+        "user_id" integer NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "expires_at" integer NOT NULL
+      );
+    `);
+
     // Check if worker exists
     const [existingWorker] = await db
       .select()
