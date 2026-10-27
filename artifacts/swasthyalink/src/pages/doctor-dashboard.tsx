@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, CalendarDays, Check, ChevronRight, CircleAlert, ClipboardPlus, FileText, HeartPulse, LogOut, Menu, Pill, QrCode, Search, ShieldCheck, Stethoscope, UserRound, X } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { Activity, Building2, CalendarDays, Camera, Check, ChevronRight, CircleAlert, ClipboardPlus, FileText, HeartPulse, LogOut, MapPin, Menu, Pill, QrCode, Search, ShieldCheck, Sparkles, Stethoscope, Upload, UserRound, X } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getGetSessionQueryKey,
@@ -44,7 +44,7 @@ function WorkerSummary({ worker }: { worker: Profile }) {
   const facts = [
     ['Age', worker.age ? `${worker.age} years` : 'Not added'],
     ['Blood group', worker.bloodGroup || 'Not added'],
-    ['Language', worker.language === 'ml' ? 'Malayalam' : 'English'],
+    ['Language', worker.language === 'ml' ? 'Malayalam' : worker.language === 'hi' ? 'Hindi' : worker.language === 'bn' ? 'Bengali' : 'English'],
   ];
   return <section className="overflow-hidden rounded-[28px] bg-primary p-6 text-primary-foreground shadow-soft sm:p-8" data-testid="card-worker-profile"><div className="flex items-start justify-between gap-4"><div className="flex items-center gap-4"><span className="flex size-14 items-center justify-center rounded-2xl bg-white/12 font-display text-xl font-extrabold">{worker.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground/60">Worker profile</p><h2 className="mt-1 font-display text-2xl font-extrabold tracking-[-0.04em]" data-testid="text-worker-name">{worker.name}</h2><p className="mt-1 text-xs text-primary-foreground/70" data-testid="text-worker-health-id">{worker.healthId}</p></div></div><ShieldCheck size={22} className="opacity-80" /></div><div className="mt-7 grid grid-cols-3 divide-x divide-white/15 border-t border-white/15 pt-5">{facts.map(([label, value]) => <div key={label} className="px-3 first:pl-0 last:pr-0"><p className="text-[9px] font-bold uppercase tracking-wider text-primary-foreground/55">{label}</p><p className="mt-1 text-xs font-bold">{value}</p></div>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl bg-white/10 p-4"><p className="text-[9px] font-bold uppercase tracking-wider text-primary-foreground/55">Allergies</p><p className="mt-2 text-sm font-bold">{worker.allergies || 'None listed'}</p></div><div className="rounded-2xl bg-white/10 p-4"><p className="text-[9px] font-bold uppercase tracking-wider text-primary-foreground/55">Emergency contact</p><p className="mt-2 text-sm font-bold">{worker.emergencyContact || 'Not added'}</p></div></div></section>;
 }
@@ -73,27 +73,260 @@ function RecordForm({ healthId, onCreated }: { healthId: string; onCreated: () =
 
 function Scanner({ onDecoded, onClose }: { onDecoded: (value: string) => void; onClose: () => void }) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
-  useEffect(() => {
-    const scanner = new Html5Qrcode('doctor-qr-reader');
-    scannerRef.current = scanner;
-    scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 230, height: 230 } }, (decoded) => {
-      onDecoded(decoded.trim());
-      scanner.stop().catch(() => undefined);
-    }, () => undefined).catch(() => setError('Camera access is unavailable. You can search by Health ID instead.'));
-    return () => { scanner.stop().catch(() => undefined); scanner.clear(); };
+
+  const startScanner = useCallback(async () => {
+    setError('');
+    let isMounted = true;
+    let isStarted = false;
+
+    try {
+      const scanner = new Html5Qrcode('doctor-qr-reader');
+      scannerRef.current = scanner;
+
+      try {
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (decoded) => {
+            if (!isMounted) return;
+            onDecoded(decoded.trim());
+          },
+          () => undefined
+        );
+        isStarted = true;
+      } catch {
+        // Fallback to front/user camera
+        try {
+          await scanner.start(
+            { facingMode: 'user' },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decoded) => {
+              if (!isMounted) return;
+              onDecoded(decoded.trim());
+            },
+            () => undefined
+          );
+          isStarted = true;
+        } catch (err2: any) {
+          const isBlocked = err2?.name === 'NotAllowedError' || String(err2).toLowerCase().includes('permission') || String(err2).includes('NotAllowedError');
+          const msg = isBlocked
+            ? 'Camera blocked by browser. Click the "Camera not allowed" icon in your URL bar to Allow, or use the instant buttons below:'
+            : 'Camera access unavailable. You can upload a QR image or click the instant test scan below:';
+          setError(msg);
+        }
+      }
+    } catch {
+      setError('Camera access unavailable. You can upload a QR image or click the instant test scan below:');
+    }
   }, [onDecoded]);
-  return <div className="mt-4 rounded-[24px] border border-primary/20 bg-primary/5 p-4" data-testid="panel-qr-scanner"><div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-extrabold">Scan worker card</p><p className="mt-1 text-xs text-muted-foreground">Point the camera at the Health ID code.</p></div><button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-secondary" data-testid="button-close-scanner"><X size={17} /></button></div><div id="doctor-qr-reader" className="overflow-hidden rounded-2xl bg-foreground" data-testid="qr-reader" />{error && <p className="mt-3 text-xs font-semibold text-destructive" data-testid="status-scanner-error">{error}</p>}</div>;
+
+  useEffect(() => {
+    startScanner();
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => undefined).finally(() => {
+          try { scannerRef.current?.clear(); } catch {}
+        });
+      }
+    };
+  }, [startScanner]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError('');
+    try {
+      const scanner = scannerRef.current || new Html5Qrcode('doctor-qr-reader');
+      const decoded = await scanner.scanFile(file, false);
+      onDecoded(decoded.trim());
+    } catch {
+      setError('Could not detect a QR code in that image. Try a clearer photo or enter the Health ID.');
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-[24px] border border-primary/20 bg-primary/5 p-4" data-testid="panel-qr-scanner">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-extrabold text-foreground">Scan Worker Health Card</p>
+          <p className="mt-1 text-xs text-muted-foreground">Scan via camera, upload a photo/image, or run a test scan.</p>
+        </div>
+        <button type="button" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-secondary" data-testid="button-close-scanner">
+          <X size={17} />
+        </button>
+      </div>
+
+      <div id="doctor-qr-reader" className="overflow-hidden rounded-2xl bg-foreground min-h-[160px]" data-testid="qr-reader" />
+
+      {error && (
+        <div className="mt-3 rounded-2xl border border-destructive/25 bg-destructive/10 p-3.5 text-xs text-foreground" data-testid="status-scanner-error">
+          <p className="font-bold text-destructive">⚠️ {error}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            In Chrome: click the <strong>Camera icon with a red X</strong> on the left side of the address bar at the top, select <strong>"Always allow..."</strong>, then click <strong>Retry Camera</strong> below.
+          </p>
+        </div>
+      )}
+
+      {/* Alternative Scan Options */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-primary/10">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
+
+        <button
+          type="button"
+          onClick={() => onDecoded('SWL-2026-KL892')}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary text-primary-foreground px-3.5 py-2 text-xs font-bold hover:opacity-90 shadow-soft transition-opacity"
+          data-testid="button-quick-scan-demo"
+        >
+          <Sparkles size={14} /> ⚡ Scan Demo Card (Rahul Kumar)
+        </button>
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary shadow-sm transition-colors"
+          data-testid="button-upload-qr-image"
+        >
+          <Upload size={14} className="text-primary" /> Upload QR Image
+        </button>
+
+        <button
+          type="button"
+          onClick={startScanner}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary shadow-sm transition-colors"
+          data-testid="button-retry-camera"
+        >
+          <Camera size={14} className="text-primary" /> Retry Camera
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function SearchPanel({ onSelect }: { onSelect: (worker: WorkerSearchResult) => void }) {
   const [search, setSearch] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [lastScannedId, setLastScannedId] = useState<string | null>(null);
   const trimmedSearch = search.trim();
-  const query = useSearchWorkers({ q: trimmedSearch }, { query: { enabled: trimmedSearch.length > 1, queryKey: getSearchWorkersQueryKey({ q: trimmedSearch }) } });
+  const query = useSearchWorkers({ q: trimmedSearch }, { query: { enabled: trimmedSearch.length > 0, queryKey: getSearchWorkersQueryKey({ q: trimmedSearch }) } });
   const results = useMemo(() => query.data ?? [], [query.data]);
-  const onDecoded = useCallback((value: string) => { setSearch(value); setScanning(false); }, []);
-  return <section className="rounded-[26px] border border-border bg-card p-5 shadow-card sm:p-6" data-testid="panel-worker-search"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Find a worker</p><h2 className="mt-1 font-display text-xl font-extrabold tracking-[-0.04em]">Search or scan a health card</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Search by name or Health ID before requesting access.</p></div><span className="flex size-10 items-center justify-center rounded-2xl bg-secondary text-primary"><Search size={19} /></span></div><div className="mt-5 flex gap-2"><div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-4 top-3.5 size-4 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or Health ID" className="h-11 w-full rounded-2xl border border-input bg-background pl-11 pr-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" data-testid="input-worker-search" /></div><button type="button" onClick={() => setScanning((value) => !value)} className={`flex size-11 shrink-0 items-center justify-center rounded-2xl border transition-colors ${scanning ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-primary hover:bg-secondary'}`} aria-label="Scan QR code" data-testid="button-open-scanner"><QrCode size={19} /></button></div>{scanning && <Scanner onDecoded={onDecoded} onClose={() => setScanning(false)} />}{trimmedSearch.length > 1 && <div className="mt-4">{query.isLoading ? <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div> : query.isError ? <DoctorError message="Search is temporarily unavailable." onRetry={() => query.refetch()} /> : results.length === 0 ? <div className="rounded-2xl bg-secondary/70 p-5 text-center" data-testid="empty-worker-search"><p className="text-sm font-bold">No worker found</p><p className="mt-1 text-xs text-muted-foreground">Try the full Health ID or a different spelling.</p></div> : <div className="space-y-2" data-testid="list-worker-search-results">{results.map((worker) => <button key={worker.id} type="button" onClick={() => onSelect(worker)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-background p-3 text-left transition-colors hover:border-primary/40 hover:bg-secondary/45" data-testid={`button-select-worker-${worker.id}`}><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary font-display text-xs font-extrabold text-primary">{worker.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{worker.name}</span><span className="mt-1 block text-[10px] font-semibold text-muted-foreground">{worker.healthId} · {worker.age ? `${worker.age} years` : 'Age not added'} · {worker.bloodGroup || 'Blood group not added'}</span></span><ChevronRight size={16} className="text-muted-foreground" /></button>)}</div>}</div>}</section>;
+
+  const onDecoded = useCallback((value: string) => {
+    let clean = value.trim();
+    if (clean.startsWith('{') && clean.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(clean);
+        if (parsed.healthId) clean = String(parsed.healthId).trim();
+        else if (parsed.id) clean = String(parsed.id).trim();
+      } catch {}
+    } else {
+      const match = clean.match(/SWL-[\w-]+/i);
+      if (match) clean = match[0];
+    }
+    setSearch(clean);
+    setLastScannedId(clean);
+    setScanning(false);
+  }, []);
+
+  // When a worker is scanned and results arrive, auto-select them immediately
+  useEffect(() => {
+    if (lastScannedId && results.length > 0) {
+      const matched = results.find((w: WorkerSearchResult) => w.healthId.toLowerCase() === lastScannedId.toLowerCase()) || results[0];
+      if (matched) {
+        onSelect(matched);
+      }
+      setLastScannedId(null);
+    }
+  }, [results, lastScannedId, onSelect]);
+
+  return (
+    <section className="rounded-[26px] border border-border bg-card p-5 shadow-card sm:p-6" data-testid="panel-worker-search">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Find a worker</p>
+          <h2 className="mt-1 font-display text-xl font-extrabold tracking-[-0.04em]">Search or scan a health card</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">Search by name or Health ID before requesting access.</p>
+        </div>
+        <span className="flex size-10 items-center justify-center rounded-2xl bg-secondary text-primary">
+          <Search size={19} />
+        </span>
+      </div>
+
+      <div className="mt-5 flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-4 top-3.5 size-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Name or Health ID (e.g. Rahul or SWL-2026)"
+            className="h-11 w-full rounded-2xl border border-input bg-background pl-11 pr-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+            data-testid="input-worker-search"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setScanning((value) => !value)}
+          className={`flex size-11 shrink-0 items-center justify-center rounded-2xl border transition-colors ${
+            scanning ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-primary hover:bg-secondary'
+          }`}
+          aria-label="Scan QR code"
+          data-testid="button-open-scanner"
+        >
+          <QrCode size={19} />
+        </button>
+      </div>
+
+      {scanning && <Scanner onDecoded={onDecoded} onClose={() => setScanning(false)} />}
+
+      {trimmedSearch.length > 0 && (
+        <div className="mt-4">
+          {query.isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : query.isError ? (
+            <DoctorError message="Search is temporarily unavailable." onRetry={() => query.refetch()} />
+          ) : results.length === 0 ? (
+            <div className="rounded-2xl bg-secondary/70 p-5 text-center" data-testid="empty-worker-search">
+              <p className="text-sm font-bold">No worker found</p>
+              <p className="mt-1 text-xs text-muted-foreground">Try the full Health ID or a different spelling.</p>
+            </div>
+          ) : (
+            <div className="space-y-2" data-testid="list-worker-search-results">
+              {results.map((worker: WorkerSearchResult) => (
+                <button
+                  key={worker.id}
+                  type="button"
+                  onClick={() => onSelect(worker)}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-border bg-background p-3 text-left transition-colors hover:border-primary/40 hover:bg-secondary/45"
+                  data-testid={`button-select-worker-${worker.id}`}
+                >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary font-display text-xs font-extrabold text-primary">
+                    {worker.name.split(' ').map((part: string) => part[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">{worker.name}</span>
+                    <span className="mt-1 block text-[10px] font-semibold text-muted-foreground">
+                      {worker.healthId} · {worker.age ? `${worker.age} years` : 'Age not added'} · {worker.bloodGroup || 'Blood group not added'}
+                    </span>
+                  </span>
+                  <ChevronRight size={16} className="text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 export default function DoctorDashboardPage({ user }: { user: Profile }) {
@@ -110,5 +343,5 @@ export default function DoctorDashboardPage({ user }: { user: Profile }) {
   const handleSelect = (worker: WorkerSearchResult) => { setSelectedWorker(worker); setAccessGranted(false); };
   const handleLogout = () => logout.mutate(undefined, { onSuccess: () => { client.removeQueries({ queryKey: getGetSessionQueryKey() }); setLocation('/doctor-login'); } });
   const clearWorker = () => { setSelectedWorker(null); setAccessGranted(false); };
-  return <div className="app-shell-bg min-h-[100dvh]"><header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl"><div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8"><div className="flex items-center gap-3"><DoctorMark /><div><p className="font-display text-[16px] font-extrabold tracking-[-0.03em]">Swasthya<span className="text-primary">Link</span></p><p className="hidden text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground sm:block">Clinical workspace</p></div></div><div className="flex items-center gap-3"><div className="hidden text-right sm:block"><p className="text-xs font-bold">{user.name}</p><p className="text-[10px] text-muted-foreground">{user.email}</p></div><span className="flex size-10 items-center justify-center rounded-full bg-secondary font-display text-xs font-extrabold text-primary">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><button type="button" onClick={handleLogout} disabled={logout.isPending} className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-bold text-muted-foreground hover:border-destructive/30 hover:text-destructive sm:flex" data-testid="button-doctor-logout"><LogOut size={14} /> Sign out</button><button type="button" onClick={() => setMobileMenu((value) => !value)} className="rounded-xl p-2 text-muted-foreground sm:hidden" aria-label="Open menu" data-testid="button-doctor-menu"><Menu size={20} /></button></div></div>{mobileMenu && <div className="border-t border-border/70 bg-card px-5 py-3 sm:hidden"><button type="button" onClick={handleLogout} className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-xs font-bold text-destructive" data-testid="button-doctor-mobile-logout"><LogOut size={15} /> Sign out</button></div>}</header><div className="mx-auto flex max-w-7xl"><aside className="hidden w-60 shrink-0 border-r border-border/70 px-5 py-8 lg:block"><p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Workspace</p><div className="rounded-2xl bg-primary px-3 py-3 text-sm font-bold text-primary-foreground shadow-soft"><span className="flex items-center gap-3"><Stethoscope size={18} /> Worker records</span></div><div className="mt-8 rounded-2xl border border-border bg-card p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Access principle</p><p className="mt-3 text-xs leading-5 text-foreground">Ask first. Read only what is needed for this visit.</p><div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-primary"><ShieldCheck size={14} /> Consent protected</div></div></aside><main className="min-w-0 flex-1 px-5 pb-12 pt-7 sm:px-8 lg:px-12"><div className="mx-auto max-w-6xl"><div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-medium text-muted-foreground">Good to see you, {user.name.split(' ')[0]}</p><h1 className="font-display text-3xl font-extrabold tracking-[-0.06em] sm:text-[40px]">Care, connected<span className="text-primary">.</span></h1><p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Find a worker, confirm access, and keep their health story ready for the next clinic.</p></div><div className="flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-2 text-[10px] font-bold text-primary"><ShieldCheck size={14} /> Consent first</div></div><div className="grid gap-6 xl:grid-cols-[.82fr_1.18fr]"><div><SearchPanel onSelect={handleSelect} />{selectedWorker && !accessGranted && <section className="mt-5 animate-float-in rounded-[26px] border border-accent/35 bg-accent/10 p-5 sm:p-6" data-testid="card-consent-request"><div className="flex items-start gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent/25 text-accent-foreground"><ShieldCheck size={20} /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent-foreground">Permission required</p><h2 className="mt-1 font-display text-lg font-extrabold">Ask {selectedWorker.name.split(' ')[0]} to share their records</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">You are about to view the profile linked to <span className="font-bold text-foreground">{selectedWorker.healthId}</span>. Confirm that the worker has shown you their health card and agreed to this lookup.</p></div></div><div className="mt-5 flex flex-col gap-2 sm:flex-row"><button type="button" onClick={() => setAccessGranted(true)} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground" data-testid="button-approve-worker-access"><Check size={15} /> Confirm access</button><button type="button" onClick={clearWorker} className="rounded-2xl border border-border bg-card px-4 py-3 text-xs font-bold text-muted-foreground" data-testid="button-cancel-worker-access">Choose another worker</button></div></section>}{selectedWorker && accessGranted && <button type="button" onClick={clearWorker} className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary" data-testid="button-clear-worker"><X size={14} /> Choose another worker</button>}</div><div className="min-w-0">{!selectedWorker && <div className="flex min-h-[370px] flex-col items-center justify-center rounded-[28px] border border-dashed border-border bg-card/70 p-8 text-center" data-testid="empty-doctor-workspace"><span className="flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary"><UserRound size={25} /></span><h2 className="mt-5 font-display text-xl font-extrabold tracking-[-0.04em]">Select a worker to begin</h2><p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">Search by name or Health ID, or scan the worker's card. Their records stay hidden until access is confirmed.</p></div>}{selectedWorker && !accessGranted && <div className="flex min-h-[370px] items-center justify-center rounded-[28px] border border-dashed border-border bg-card/70 p-8 text-center" data-testid="status-awaiting-consent"><div><span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent/20 text-accent-foreground"><ShieldCheck size={25} /></span><p className="mt-5 font-display text-xl font-extrabold">Waiting for access</p><p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">Confirm the worker's consent on the left to open their health story.</p></div></div>}{selectedWorker && accessGranted && <div className="space-y-6">{profileQuery.isLoading ? <div className="space-y-3"><Skeleton className="h-64 w-full" /><Skeleton className="h-32 w-full" /></div> : profileQuery.isError || !profileQuery.data ? <DoctorError onRetry={() => profileQuery.refetch()} /> : <><WorkerSummary worker={profileQuery.data} /><div><div className="mb-4 flex items-end justify-between gap-4"><div><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Medical records</p><h2 className="font-display text-2xl font-extrabold tracking-[-0.05em]">Health timeline</h2></div><span className="rounded-full bg-secondary px-3 py-1.5 text-[10px] font-bold text-primary">{records.length} {records.length === 1 ? 'entry' : 'entries'}</span></div><RecordsTimeline records={records} isLoading={recordsQuery.isLoading} isError={recordsQuery.isError} onRetry={() => recordsQuery.refetch()} /></div><RecordForm healthId={selectedWorker.healthId} onCreated={() => recordsQuery.refetch()} /></>}</div>}</div></div></div></main></div></div>;
+  return <div className="app-shell-bg min-h-[100dvh]"><header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl"><div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8"><div className="flex items-center gap-3"><DoctorMark /><div><p className="font-display text-[16px] font-extrabold tracking-[-0.03em]">Swasthya<span className="text-primary">Link</span></p><p className="hidden text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground sm:block">Clinical workspace</p></div></div><div className="flex items-center gap-3"><Link href="/nearby" className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary transition-colors" data-testid="button-doctor-top-nearby"><MapPin size={14} className="text-primary" /> Hospitals & Medicals</Link><div className="hidden text-right sm:block"><p className="text-xs font-bold">{user.name}</p><p className="text-[10px] text-muted-foreground">{user.healthId}</p></div><span className="flex size-10 items-center justify-center rounded-full bg-secondary font-display text-xs font-extrabold text-primary">{user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><button type="button" onClick={handleLogout} disabled={logout.isPending} className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-bold text-muted-foreground hover:border-destructive/30 hover:text-destructive sm:flex" data-testid="button-doctor-logout"><LogOut size={14} /> Sign out</button><button type="button" onClick={() => setMobileMenu((value) => !value)} className="rounded-xl p-2 text-muted-foreground sm:hidden" aria-label="Open menu" data-testid="button-doctor-menu"><Menu size={20} /></button></div></div>{mobileMenu && <div className="border-t border-border/70 bg-card px-5 py-3 sm:hidden space-y-2"><Link href="/nearby" className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-xs font-bold text-foreground hover:bg-secondary"><MapPin size={15} className="text-primary" /> Nearby Hospitals & Pharmacies</Link><button type="button" onClick={handleLogout} className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-xs font-bold text-destructive" data-testid="button-doctor-mobile-logout"><LogOut size={15} /> Sign out</button></div>}</header><div className="mx-auto flex max-w-7xl"><aside className="hidden w-60 shrink-0 border-r border-border/70 px-5 py-8 lg:block"><p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Workspace</p><div className="space-y-2"><div className="rounded-2xl bg-primary px-3 py-3 text-sm font-bold text-primary-foreground shadow-soft"><span className="flex items-center gap-3"><Stethoscope size={18} /> Worker records</span></div><Link href="/nearby" className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5 text-sm font-bold text-foreground hover:bg-secondary transition-colors" data-testid="doctor-aside-nearby"><MapPin size={18} className="text-primary" /> Nearby Care</Link></div><div className="mt-8 rounded-2xl border border-border bg-card p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Access principle</p><p className="mt-3 text-xs leading-5 text-foreground">Ask first. Read only what is needed for this visit.</p><div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-primary"><ShieldCheck size={14} /> Consent protected</div></div></aside><main className="min-w-0 flex-1 px-5 pb-12 pt-7 sm:px-8 lg:px-12"><div className="mx-auto max-w-6xl"><div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm font-medium text-muted-foreground">Good to see you, {user.name.split(' ')[0]}</p><h1 className="font-display text-3xl font-extrabold tracking-[-0.06em] sm:text-[40px]">Care, connected<span className="text-primary">.</span></h1><p className="mt-2 max-w-lg text-sm leading-6 text-muted-foreground">Find a worker, confirm access, and keep their health story ready for the next clinic.</p></div><div className="flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-2 text-[10px] font-bold text-primary"><ShieldCheck size={14} /> Consent first</div></div><div className="grid gap-6 xl:grid-cols-[.82fr_1.18fr]"><div><SearchPanel onSelect={handleSelect} />{selectedWorker && !accessGranted && <section className="mt-5 animate-float-in rounded-[26px] border border-accent/35 bg-accent/10 p-5 sm:p-6" data-testid="card-consent-request"><div className="flex items-start gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-accent/25 text-accent-foreground"><ShieldCheck size={20} /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent-foreground">Permission required</p><h2 className="mt-1 font-display text-lg font-extrabold">Ask {selectedWorker.name.split(' ')[0]} to share their records</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">You are about to view the profile linked to <span className="font-bold text-foreground">{selectedWorker.healthId}</span>. Confirm that the worker has shown you their health card and agreed to this lookup.</p></div></div><div className="mt-5 flex flex-col gap-2 sm:flex-row"><button type="button" onClick={() => setAccessGranted(true)} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground" data-testid="button-approve-worker-access"><Check size={15} /> Confirm access</button><button type="button" onClick={clearWorker} className="rounded-2xl border border-border bg-card px-4 py-3 text-xs font-bold text-muted-foreground" data-testid="button-cancel-worker-access">Choose another worker</button></div></section>}{selectedWorker && accessGranted && <button type="button" onClick={clearWorker} className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-primary" data-testid="button-clear-worker"><X size={14} /> Choose another worker</button>}</div><div className="min-w-0">{!selectedWorker && <div className="flex min-h-[370px] flex-col items-center justify-center rounded-[28px] border border-dashed border-border bg-card/70 p-8 text-center" data-testid="empty-doctor-workspace"><span className="flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary"><UserRound size={25} /></span><h2 className="mt-5 font-display text-xl font-extrabold tracking-[-0.04em]">Select a worker to begin</h2><p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">Search by name or Health ID, or scan the worker's card. Their records stay hidden until access is confirmed.</p></div>}{selectedWorker && !accessGranted && <div className="flex min-h-[370px] items-center justify-center rounded-[28px] border border-dashed border-border bg-card/70 p-8 text-center" data-testid="status-awaiting-consent"><div><span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent/20 text-accent-foreground"><ShieldCheck size={25} /></span><p className="mt-5 font-display text-xl font-extrabold">Waiting for access</p><p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">Confirm the worker's consent on the left to open their health story.</p></div></div>}{selectedWorker && accessGranted && <div className="space-y-6">{profileQuery.isLoading ? <div className="space-y-3"><Skeleton className="h-64 w-full" /><Skeleton className="h-32 w-full" /></div> : profileQuery.isError || !profileQuery.data ? <DoctorError onRetry={() => profileQuery.refetch()} /> : <><WorkerSummary worker={profileQuery.data} /><div><div className="mb-4 flex items-end justify-between gap-4"><div><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Medical records</p><h2 className="font-display text-2xl font-extrabold tracking-[-0.05em]">Health timeline</h2></div><span className="rounded-full bg-secondary px-3 py-1.5 text-[10px] font-bold text-primary">{records.length} {records.length === 1 ? 'entry' : 'entries'}</span></div><RecordsTimeline records={records} isLoading={recordsQuery.isLoading} isError={recordsQuery.isError} onRetry={() => recordsQuery.refetch()} /></div><RecordForm healthId={selectedWorker.healthId} onCreated={() => recordsQuery.refetch()} /></>}</div>}</div></div></div></main></div></div>;
 }

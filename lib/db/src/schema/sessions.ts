@@ -1,8 +1,8 @@
-import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { usersTable } from "./users";
 
-export const sessionsTable = pgTable("health_sessions", {
+export const sessionsTable = sqliteTable("health_sessions", {
   token: text("token").primaryKey(),
   userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  expiresAt: integer("expires_at", { mode: 'timestamp' }).notNull(),
 });

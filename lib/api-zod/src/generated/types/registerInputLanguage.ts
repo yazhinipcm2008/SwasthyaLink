@@ -12,4 +12,6 @@ export type RegisterInputLanguage = typeof RegisterInputLanguage[keyof typeof Re
 export const RegisterInputLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;

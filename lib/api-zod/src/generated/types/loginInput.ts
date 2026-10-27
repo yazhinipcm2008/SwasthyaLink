@@ -8,7 +8,8 @@
 import type { UserRole } from './userRole';
 
 export interface LoginInput {
-  email: string;
+  /** @pattern ^\d{12}$ */
+  aadhaar: string;
   /** @minLength 1 */
   password: string;
   role?: UserRole;

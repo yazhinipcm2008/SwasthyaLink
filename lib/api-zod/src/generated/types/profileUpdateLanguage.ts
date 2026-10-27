@@ -12,4 +12,6 @@ export type ProfileUpdateLanguage = typeof ProfileUpdateLanguage[keyof typeof Pr
 export const ProfileUpdateLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;

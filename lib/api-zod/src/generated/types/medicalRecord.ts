@@ -11,6 +11,9 @@ export interface MedicalRecord {
   id: number;
   kind: MedicalRecordKind;
   title: string;
-  details: string;
+  /** @nullable */
+  providerName?: string | null;
+  /** @nullable */
+  details?: string | null;
   recordedAt: Date;
 }

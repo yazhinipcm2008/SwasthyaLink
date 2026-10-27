@@ -12,4 +12,6 @@ export type ProfileLanguage = typeof ProfileLanguage[keyof typeof ProfileLanguag
 export const ProfileLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;

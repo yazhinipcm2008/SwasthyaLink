@@ -1,16 +1,17 @@
 import { createInsertSchema } from "drizzle-zod";
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
 
-export const recordsTable = pgTable("medical_records", {
-  id: serial("id").primaryKey(),
+export const recordsTable = sqliteTable("medical_records", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   kind: text("kind").notNull(),
   title: text("title").notNull(),
-  details: text("details").notNull(),
-  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  providerName: text("provider_name"),
+  details: text("details"),
+  recordedAt: integer("recorded_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
 export const insertRecordSchema = createInsertSchema(recordsTable).omit({

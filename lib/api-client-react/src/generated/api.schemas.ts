@@ -15,6 +15,8 @@ export type RegisterInputLanguage = typeof RegisterInputLanguage[keyof typeof Re
 export const RegisterInputLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
@@ -28,7 +30,8 @@ export const UserRole = {
 export interface RegisterInput {
   /** @minLength 1 */
   name: string;
-  email: string;
+  /** @pattern ^\d{12}$ */
+  aadhaar: string;
   /** @minLength 6 */
   password: string;
   role?: UserRole;
@@ -36,7 +39,8 @@ export interface RegisterInput {
 }
 
 export interface LoginInput {
-  email: string;
+  /** @pattern ^\d{12}$ */
+  aadhaar: string;
   /** @minLength 1 */
   password: string;
   role?: UserRole;
@@ -48,13 +52,15 @@ export type ProfileLanguage = typeof ProfileLanguage[keyof typeof ProfileLanguag
 export const ProfileLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;
 
 export interface Profile {
   id: number;
   healthId: string;
   name: string;
-  email: string;
+  aadhaar: string;
   role: UserRole;
   /** @nullable */
   age: number | null;
@@ -77,6 +83,8 @@ export type ProfileUpdateLanguage = typeof ProfileUpdateLanguage[keyof typeof Pr
 export const ProfileUpdateLanguage = {
   en: 'en',
   ml: 'ml',
+  hi: 'hi',
+  bn: 'bn',
 } as const;
 
 export interface ProfileUpdate {
@@ -102,6 +110,7 @@ export type MedicalRecordKind = typeof MedicalRecordKind[keyof typeof MedicalRec
 export const MedicalRecordKind = {
   diagnosis: 'diagnosis',
   prescription: 'prescription',
+  vaccination: 'vaccination',
   visit: 'visit',
 } as const;
 
@@ -109,7 +118,10 @@ export interface MedicalRecord {
   id: number;
   kind: MedicalRecordKind;
   title: string;
-  details: string;
+  /** @nullable */
+  providerName?: string | null;
+  /** @nullable */
+  details?: string | null;
   recordedAt: string;
 }
 
@@ -129,6 +141,7 @@ export type RecordInputKind = typeof RecordInputKind[keyof typeof RecordInputKin
 export const RecordInputKind = {
   diagnosis: 'diagnosis',
   prescription: 'prescription',
+  vaccination: 'vaccination',
   visit: 'visit',
 } as const;
 
@@ -136,8 +149,10 @@ export interface RecordInput {
   kind: RecordInputKind;
   /** @minLength 1 */
   title: string;
-  /** @minLength 1 */
-  details: string;
+  /** @nullable */
+  providerName?: string | null;
+  /** @nullable */
+  details?: string | null;
   recordedAt?: string;
 }
 

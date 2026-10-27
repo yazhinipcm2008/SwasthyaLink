@@ -9,8 +9,9 @@ const router: IRouter = Router();
 function toRecord(record: typeof recordsTable.$inferSelect) {
   return {
     id: record.id,
-    kind: record.kind as "diagnosis" | "prescription" | "visit",
+    kind: record.kind as "diagnosis" | "prescription" | "vaccination" | "visit",
     title: record.title,
+    providerName: record.providerName,
     details: record.details,
     recordedAt: record.recordedAt.toISOString(),
   };
@@ -42,7 +43,8 @@ router.post("/records", async (req, res) => {
       userId: user.id,
       kind: data.kind,
       title: data.title.trim(),
-      details: data.details.trim(),
+      providerName: data.providerName?.trim() || null,
+      details: data.details?.trim() || null,
       ...(data.recordedAt ? { recordedAt: new Date(data.recordedAt) } : {}),
     })
     .returning();

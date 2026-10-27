@@ -21,10 +21,10 @@ router.post("/auth/register", async (req, res) => {
     return;
   }
   const data = parsed.data;
-  const email = data.email.trim().toLowerCase();
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  const aadhaar = data.aadhaar.trim();
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.aadhaar, aadhaar)).limit(1);
   if (existing) {
-    res.status(400).json({ error: "An account with this email already exists." });
+    res.status(400).json({ error: "An account with this Aadhaar already exists." });
     return;
   }
   const [user] = await db
@@ -32,7 +32,7 @@ router.post("/auth/register", async (req, res) => {
     .values({
       healthId: createHealthId(),
       name: data.name.trim(),
-      email,
+      aadhaar,
       passwordHash: hashPassword(data.password),
       role: data.role ?? "worker",
       language: data.language ?? "en",
@@ -45,13 +45,13 @@ router.post("/auth/register", async (req, res) => {
 router.post("/auth/login", async (req, res) => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(401).json({ error: "Email or password is incorrect." });
+    res.status(401).json({ error: "Aadhaar or password is incorrect." });
     return;
   }
-  const email = parsed.data.email.trim().toLowerCase();
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  const aadhaar = parsed.data.aadhaar.trim();
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.aadhaar, aadhaar)).limit(1);
   if (!user || !verifyPassword(parsed.data.password, user.passwordHash) || (parsed.data.role && user.role !== parsed.data.role)) {
-    res.status(401).json({ error: "Email or password is incorrect." });
+    res.status(401).json({ error: "Aadhaar or password is incorrect." });
     return;
   }
   await startSession(res, user.id);

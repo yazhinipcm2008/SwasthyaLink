@@ -25,13 +25,13 @@ export function toProfile(user: User) {
     id: user.id,
     healthId: user.healthId,
     name: user.name,
-    email: user.email,
+    aadhaar: user.aadhaar,
     role: user.role,
     age: user.age,
     bloodGroup: user.bloodGroup,
     allergies: user.allergies,
     emergencyContact: user.emergencyContact,
-    language: user.language === "ml" ? "ml" : "en",
+    language: (user.language === "ml" || user.language === "hi" || user.language === "bn") ? user.language : "en",
   };
 }
 
@@ -60,14 +60,16 @@ export async function endSession(req: Request, res: Response) {
 
 export async function currentUser(req: Request) {
   const token = req.cookies?.[SESSION_COOKIE];
-  if (!token) return null;
-  const [result] = await db
-    .select({ user: usersTable })
-    .from(sessionsTable)
-    .innerJoin(usersTable, eq(sessionsTable.userId, usersTable.id))
-    .where(and(eq(sessionsTable.token, token), gt(sessionsTable.expiresAt, new Date())))
-    .limit(1);
-  return result?.user ?? null;
+  if (token) {
+    const [result] = await db
+      .select({ user: usersTable })
+      .from(sessionsTable)
+      .innerJoin(usersTable, eq(sessionsTable.userId, usersTable.id))
+      .where(and(eq(sessionsTable.token, token), gt(sessionsTable.expiresAt, new Date())))
+      .limit(1);
+    if (result?.user) return result.user;
+  }
+  return null;
 }
 
 export async function requireUser(req: Request, res: Response) {

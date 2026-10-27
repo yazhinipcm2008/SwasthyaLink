@@ -1,14 +1,16 @@
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
+// Local database fallback provided in config
 
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
-  dialect: "postgresql",
+  schema: [
+    "./src/schema/users.ts",
+    "./src/schema/records.ts",
+    "./src/schema/sessions.ts"
+  ],
+  dialect: "sqlite",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL || "file:../../local.db",
   },
 });

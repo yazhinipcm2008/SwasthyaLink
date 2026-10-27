@@ -32,7 +32,7 @@ export default function DoctorLoginPage() {
   const client = useQueryClient();
   const [mode, setMode] = useState<Mode>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [aadhaar, setAadhaar] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
   const register = useRegister();
@@ -41,14 +41,14 @@ export default function DoctorLoginPage() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (mode === 'login') {
-      login.mutate({ data: { email: email.trim(), password, role: 'doctor' } }, {
+      login.mutate({ data: { aadhaar: aadhaar.trim(), password, role: 'doctor' } }, {
         onSuccess: () => {
           client.invalidateQueries({ queryKey: getGetSessionQueryKey() });
           setLocation('/doctor');
         },
       });
     } else {
-      register.mutate({ data: { name: name.trim(), email: email.trim(), password, role: 'doctor' } }, {
+      register.mutate({ data: { name: name.trim(), aadhaar: aadhaar.trim(), password, role: 'doctor' } }, {
         onSuccess: () => {
           client.invalidateQueries({ queryKey: getGetSessionQueryKey() });
           setLocation('/doctor');
@@ -91,12 +91,12 @@ export default function DoctorLoginPage() {
             <button type="button" onClick={() => setMode('register')} className={`rounded-xl py-2.5 text-xs font-bold transition-colors ${mode === 'register' ? 'bg-card text-foreground shadow-card' : 'text-muted-foreground'}`} data-testid="button-doctor-register">Register</button>
           </div>
 
-          {mutation.isError && <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-xs font-semibold leading-5 text-destructive" data-testid="status-doctor-auth-error">We could not verify those details. Check your email and password, then try again.</div>}
+          {mutation.isError && <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-xs font-semibold leading-5 text-destructive" data-testid="status-doctor-auth-error">We could not verify those details. Check your Aadhaar and password, then try again.</div>}
           <form onSubmit={submit} className="space-y-4">
             {mode === 'register' && <DoctorField label="Full name" id="input-doctor-name" value={name} onChange={setName} placeholder="Dr. Anjali Menon" />}
-            <DoctorField label="Work email" id="input-doctor-email" value={email} onChange={setEmail} type="email" placeholder="doctor@clinic.org" />
+            <DoctorField label="Aadhaar Number" id="input-doctor-aadhaar" value={aadhaar} onChange={setAadhaar} type="text" placeholder="000000000000" />
             <DoctorField label="Password" id="input-doctor-password" value={password} onChange={setPassword} type="password" placeholder="At least 6 characters" />
-            <button type="submit" disabled={mutation.isPending || !email || !password || (mode === 'register' && !name)} className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50" data-testid="button-doctor-submit">
+            <button type="submit" disabled={mutation.isPending || !aadhaar || !password || (mode === 'register' && !name)} className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50" data-testid="button-doctor-submit">
               {mutation.isPending ? 'Please wait…' : mode === 'login' ? 'Enter clinical workspace' : 'Create doctor account'} <ArrowUpRight size={17} />
             </button>
           </form>

@@ -283,9 +283,9 @@ components:
         name:
           type: string
           minLength: 1
-        email:
+        aadhaar:
           type: string
-          format: email
+          pattern: '^\d{12}$'
         password:
           type: string
           minLength: 6
@@ -293,20 +293,20 @@ components:
           $ref: "#/components/schemas/UserRole"
         language:
           type: string
-          enum: [en, ml]
-      required: [name, email, password]
+          enum: [en, ml, hi, bn]
+      required: [name, aadhaar, password]
     LoginInput:
       type: object
       properties:
-        email:
+        aadhaar:
           type: string
-          format: email
+          pattern: '^\d{12}$'
         password:
           type: string
           minLength: 1
         role:
           $ref: "#/components/schemas/UserRole"
-      required: [email, password]
+      required: [aadhaar, password]
     Session:
       type: object
       properties:
@@ -322,7 +322,7 @@ components:
           type: string
         name:
           type: string
-        email:
+        aadhaar:
           type: string
         role:
           $ref: "#/components/schemas/UserRole"
@@ -336,8 +336,8 @@ components:
           type: ["string", "null"]
         language:
           type: string
-          enum: [en, ml]
-      required: [id, healthId, name, email, role, age, bloodGroup, allergies, emergencyContact, language]
+          enum: [en, ml, hi, bn]
+      required: [id, healthId, name, aadhaar, role, age, bloodGroup, allergies, emergencyContact, language]
     ProfileUpdate:
       type: object
       properties:
@@ -355,7 +355,7 @@ components:
           type: ["string", "null"]
         language:
           type: string
-          enum: [en, ml]
+          enum: [en, ml, hi, bn]
     MedicalRecord:
       type: object
       properties:
@@ -363,15 +363,17 @@ components:
           type: integer
         kind:
           type: string
-          enum: [diagnosis, prescription, visit]
+          enum: [diagnosis, prescription, vaccination, visit]
         title:
           type: string
+        providerName:
+          type: ["string", "null"]
         details:
-          type: string
+          type: ["string", "null"]
         recordedAt:
           type: string
           format: date-time
-      required: [id, kind, title, details, recordedAt]
+      required: [id, kind, title, recordedAt]
     UserRole:
       type: string
       enum: [worker, doctor]
@@ -394,15 +396,16 @@ components:
       properties:
         kind:
           type: string
-          enum: [diagnosis, prescription, visit]
+          enum: [diagnosis, prescription, vaccination, visit]
         title:
           type: string
           minLength: 1
+        providerName:
+          type: ["string", "null"]
         details:
-          type: string
-          minLength: 1
+          type: ["string", "null"]
         recordedAt:
           type: string
           format: date-time
-      required: [kind, title, details]
+      required: [kind, title]
 

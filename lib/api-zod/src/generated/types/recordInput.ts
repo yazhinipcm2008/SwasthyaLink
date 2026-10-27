@@ -11,7 +11,9 @@ export interface RecordInput {
   kind: RecordInputKind;
   /** @minLength 1 */
   title: string;
-  /** @minLength 1 */
-  details: string;
+  /** @nullable */
+  providerName?: string | null;
+  /** @nullable */
+  details?: string | null;
   recordedAt?: Date;
 }

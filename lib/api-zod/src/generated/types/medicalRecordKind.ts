@@ -12,5 +12,6 @@ export type MedicalRecordKind = typeof MedicalRecordKind[keyof typeof MedicalRec
 export const MedicalRecordKind = {
   diagnosis: 'diagnosis',
   prescription: 'prescription',
+  vaccination: 'vaccination',
   visit: 'visit',
 } as const;

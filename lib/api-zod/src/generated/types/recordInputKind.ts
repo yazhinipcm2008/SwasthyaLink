@@ -12,5 +12,6 @@ export type RecordInputKind = typeof RecordInputKind[keyof typeof RecordInputKin
 export const RecordInputKind = {
   diagnosis: 'diagnosis',
   prescription: 'prescription',
+  vaccination: 'vaccination',
   visit: 'visit',
 } as const;

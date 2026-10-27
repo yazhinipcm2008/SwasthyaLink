@@ -25,10 +25,10 @@ router.patch("/profile", async (req, res) => {
     .update(usersTable)
     .set({
       ...(data.name !== undefined ? { name: data.name.trim() } : {}),
-      ...(data.age !== undefined ? { age: data.age } : {}),
-      ...(data.bloodGroup !== undefined ? { bloodGroup: data.bloodGroup } : {}),
-      ...(data.allergies !== undefined ? { allergies: data.allergies } : {}),
-      ...(data.emergencyContact !== undefined ? { emergencyContact: data.emergencyContact } : {}),
+      ...(data.age !== undefined ? { age: data.age ?? null } : {}),
+      ...(data.bloodGroup !== undefined ? { bloodGroup: data.bloodGroup?.trim() || null } : {}),
+      ...(data.allergies !== undefined ? { allergies: data.allergies?.trim() || null } : {}),
+      ...(data.emergencyContact !== undefined ? { emergencyContact: data.emergencyContact?.trim() || null } : {}),
       ...(data.language !== undefined ? { language: data.language } : {}),
     })
     .where(eq(usersTable.id, user.id))

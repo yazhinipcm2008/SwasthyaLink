@@ -11,7 +11,8 @@ import type { UserRole } from './userRole';
 export interface RegisterInput {
   /** @minLength 1 */
   name: string;
-  email: string;
+  /** @pattern ^\d{12}$ */
+  aadhaar: string;
   /** @minLength 6 */
   password: string;
   role?: UserRole;

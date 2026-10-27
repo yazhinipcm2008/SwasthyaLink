@@ -12,7 +12,7 @@ export interface Profile {
   id: number;
   healthId: string;
   name: string;
-  email: string;
+  aadhaar: string;
   role: UserRole;
   /** @nullable */
   age: number | null;

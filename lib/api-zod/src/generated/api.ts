@@ -21,16 +21,17 @@ export const HealthCheckResponse = zod.object({
  * @summary Create a patient account
  */
 
+export const registerBodyAadhaarRegExp = new RegExp('^\\d{12}$');
 export const registerBodyPasswordMin = 6;
 
 
 
 export const RegisterBody = zod.object({
   "name": zod.string().min(1),
-  "email": zod.string().email(),
+  "aadhaar": zod.string().regex(registerBodyAadhaarRegExp),
   "password": zod.string().min(registerBodyPasswordMin),
   "role": zod.enum(['worker', 'doctor']).optional(),
-  "language": zod.enum(['en', 'ml']).optional()
+  "language": zod.enum(['en', 'ml', 'hi', 'bn']).optional()
 })
 
 export const RegisterResponse = zod.object({
@@ -38,13 +39,13 @@ export const RegisterResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 })
 
@@ -52,11 +53,12 @@ export const RegisterResponse = zod.object({
 /**
  * @summary Sign in to a patient account
  */
+export const loginBodyAadhaarRegExp = new RegExp('^\\d{12}$');
 
 
 
 export const LoginBody = zod.object({
-  "email": zod.string().email(),
+  "aadhaar": zod.string().regex(loginBodyAadhaarRegExp),
   "password": zod.string().min(1),
   "role": zod.enum(['worker', 'doctor']).optional()
 })
@@ -66,13 +68,13 @@ export const LoginResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 })
 
@@ -91,13 +93,13 @@ export const GetSessionResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 })
 
@@ -109,13 +111,13 @@ export const GetProfileResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 
 
@@ -133,20 +135,20 @@ export const UpdateProfileBody = zod.object({
   "bloodGroup": zod.string().nullish(),
   "allergies": zod.string().nullish(),
   "emergencyContact": zod.string().nullish(),
-  "language": zod.enum(['en', 'ml']).optional()
+  "language": zod.enum(['en', 'ml', 'hi', 'bn']).optional()
 })
 
 export const UpdateProfileResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 
 
@@ -155,9 +157,10 @@ export const UpdateProfileResponse = zod.object({
  */
 export const GetRecordsResponseItem = zod.object({
   "id": zod.number().int(),
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string(),
-  "details": zod.string(),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date()
 })
 export const GetRecordsResponse = zod.array(GetRecordsResponseItem)
@@ -169,19 +172,20 @@ export const GetRecordsResponse = zod.array(GetRecordsResponseItem)
 
 
 
-
 export const CreateRecordBody = zod.object({
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string().min(1),
-  "details": zod.string().min(1),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date().optional()
 })
 
 export const CreateRecordResponse = zod.object({
   "id": zod.number().int(),
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string(),
-  "details": zod.string(),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date()
 })
 
@@ -217,13 +221,13 @@ export const GetWorkerProfileResponse = zod.object({
   "id": zod.number().int(),
   "healthId": zod.string(),
   "name": zod.string(),
-  "email": zod.string(),
+  "aadhaar": zod.string(),
   "role": zod.enum(['worker', 'doctor']),
   "age": zod.number().int().nullable(),
   "bloodGroup": zod.string().nullable(),
   "allergies": zod.string().nullable(),
   "emergencyContact": zod.string().nullable(),
-  "language": zod.enum(['en', 'ml'])
+  "language": zod.enum(['en', 'ml', 'hi', 'bn'])
 })
 
 
@@ -236,9 +240,10 @@ export const GetWorkerRecordsParams = zod.object({
 
 export const GetWorkerRecordsResponseItem = zod.object({
   "id": zod.number().int(),
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string(),
-  "details": zod.string(),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date()
 })
 export const GetWorkerRecordsResponse = zod.array(GetWorkerRecordsResponseItem)
@@ -254,19 +259,20 @@ export const CreateWorkerRecordParams = zod.object({
 
 
 
-
 export const CreateWorkerRecordBody = zod.object({
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string().min(1),
-  "details": zod.string().min(1),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date().optional()
 })
 
 export const CreateWorkerRecordResponse = zod.object({
   "id": zod.number().int(),
-  "kind": zod.enum(['diagnosis', 'prescription', 'visit']),
+  "kind": zod.enum(['diagnosis', 'prescription', 'vaccination', 'visit']),
   "title": zod.string(),
-  "details": zod.string(),
+  "providerName": zod.string().nullish(),
+  "details": zod.string().nullish(),
   "recordedAt": zod.coerce.date()
 })
 
